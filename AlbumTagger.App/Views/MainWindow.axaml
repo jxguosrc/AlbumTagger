@@ -1,0 +1,165 @@
+<Window
+    x:Class="AlbumTagger.App.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:AlbumTagger.App.ViewModels"
+    Title="AlbumTagger"
+    Width="1180"
+    Height="780"
+    MinWidth="920"
+    MinHeight="640"
+    WindowStartupLocation="CenterScreen">
+
+  <Window.Styles>
+    <Style Selector="TextBlock.section-title">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    <Style Selector="TextBlock.hint">
+      <Setter Property="Opacity" Value="0.68" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderLowBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="Padding" Value="14,9" />
+    </Style>
+  </Window.Styles>
+
+  <Grid Margin="16" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+    <Border Grid.Row="0" Classes="card">
+      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+        <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="专辑文件夹" />
+        <TextBox Grid.Column="1" IsReadOnly="True" PlaceholderText="尚未选择文件夹" Text="{Binding AlbumFolder}" />
+        <Button
+            x:Name="FolderButton"
+            Grid.Column="2"
+            Command="{Binding ChooseFolderCommand}"
+            Content="选择文件夹…" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="340,*" ColumnSpacing="12">
+      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12">
+          <Border Classes="card">
+            <StackPanel Spacing="7">
+              <TextBlock Classes="section-title" Text="专辑信息" />
+              <TextBlock Text="专辑名（必填）" />
+              <TextBox PlaceholderText="ALBUM" Text="{Binding AlbumTitle, Mode=TwoWay}" />
+              <TextBlock Margin="0,5,0,0" Text="专辑艺术家（可选）" />
+              <TextBox PlaceholderText="留空则保留原值" Text="{Binding AlbumArtist, Mode=TwoWay}" />
+              <TextBlock Classes="hint" Text="不会自动猜测社团、Vocal 或 Composer。" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="7">
+              <TextBlock Classes="section-title" Text="封面" />
+              <TextBox IsReadOnly="True" PlaceholderText="未选择时不修改现有封面" Text="{Binding CoverPath}" />
+              <Button
+                  x:Name="CoverButton"
+                  Command="{Binding ChooseCoverCommand}"
+                  Content="选择封面图片…" />
+              <TextBlock Classes="hint" Text="支持 PNG、JPEG、GIF、WebP；只替换正面封面。" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="7">
+              <TextBlock Classes="section-title" Text="网页曲目表" />
+              <TextBox
+                  x:Name="TracklistInput"
+                  MinHeight="220"
+                  AcceptsReturn="True"
+                  PlaceholderText="把 Tumblr / BOOTH 上的整段曲目表粘贴到这里"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  Text="{Binding TracklistText, Mode=TwoWay}"
+                  TextWrapping="Wrap"
+                  VerticalContentAlignment="Top" />
+              <Button
+                  x:Name="PreviewButton"
+                  Classes="primary"
+                  Command="{Binding ParseCommand}"
+                  Content="解析并匹配" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <Border Grid.Column="1" Classes="card">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+          <Grid Grid.Row="0" ColumnDefinitions="52,150,150,*,150,*" ColumnSpacing="8">
+            <TextBlock FontWeight="SemiBold" Text="轨号" />
+            <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="文件名" />
+            <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="原曲名" />
+            <TextBlock Grid.Column="3" FontWeight="SemiBold" Text="待写入曲名" />
+            <TextBlock Grid.Column="4" FontWeight="SemiBold" Text="ARTIST（可选）" />
+            <TextBlock Grid.Column="5" FontWeight="SemiBold" Text="变更 / 附加信息" />
+          </Grid>
+          <Separator Grid.Row="1" />
+
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Tracks}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TrackRowViewModel">
+                  <Grid Margin="0,3" ColumnDefinitions="52,150,150,*,150,*" ColumnSpacing="8">
+                    <TextBlock VerticalAlignment="Center" Text="{Binding TrackNumber}" />
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding ExistingTitle}" TextTrimming="CharacterEllipsis" />
+                    <TextBox Grid.Column="3" Text="{Binding Title, Mode=TwoWay}" />
+                    <TextBox Grid.Column="4" PlaceholderText="保留原值" Text="{Binding Artist, Mode=TwoWay}" />
+                    <StackPanel Grid.Column="5" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding ChangeSummary}" TextWrapping="Wrap" />
+                      <TextBlock Classes="hint" Text="{Binding RawMetadata}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <StackPanel Grid.Row="3" Spacing="8">
+            <TextBlock Classes="hint" Text="先检查计划；只有计划通过后才能写入。" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+              <Button
+                  x:Name="PlanButton"
+                  Classes="primary"
+                  Command="{Binding PreparePlanCommand}"
+                  Content="检查写入计划" />
+              <Button
+                  x:Name="WriteButton"
+                  Grid.Column="1"
+                  Classes="primary"
+                  Command="{Binding WriteCommand}"
+                  Content="确认并写入 FLAC"
+                  IsEnabled="{Binding CanWrite}" />
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <Border Grid.Row="2" Classes="card">
+      <Grid ColumnDefinitions="*,360" ColumnSpacing="16">
+        <StackPanel>
+          <TextBlock FontWeight="SemiBold" Text="{Binding StatusText}" TextWrapping="Wrap" />
+          <ProgressBar Margin="0,8,0,0" IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+        </StackPanel>
+        <ListBox
+            Grid.Column="1"
+            MaxHeight="92"
+            ItemsSource="{Binding Diagnostics}"
+            SelectionMode="Single" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="z440.atl.core" Version="7.16.0" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AlbumTagger.App/AlbumTagger.App.csproj" />
+  <Project Path="AlbumTagger.App.Tests/AlbumTagger.App.Tests.csproj" />
+  <Project Path="AlbumTagger.Core/AlbumTagger.Core.csproj" />
+  <Project Path="AlbumTagger.Tests/AlbumTagger.Tests.csproj" />
+</Solution>

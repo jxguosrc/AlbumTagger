@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../AlbumTagger.App/AlbumTagger.App.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures/cover.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../AlbumTagger.Tests/Fixtures/silence.flac" Link="Fixtures/silence.flac" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
