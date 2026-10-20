@@ -34,9 +34,9 @@ dotnet publish AlbumTagger.App -c Release -r win-x64 --self-contained true -p:Pu
 
 ## Core 已实现
 
-- 顶层目录 FLAC 发现与自然排序
+- 顶层目录 FLAC 发现；现有轨号完整时按轨号匹配，全无轨号时按文件名自然排序
 - 多行曲目表解析，包括 U-RASIA Tumblr 样本的“独立轨号 + 标题 + 附加信息”格式
-- 文件与曲目按预览顺序匹配，数量不一致时阻止写入
+- 文件与曲目数量不一致，或只有部分现有轨号、轨号重复、不连续时阻止写入
 - FLAC 现有标签、图片和音频帧 SHA-256 快照
 - 明确区分文本字段的“保留 / 设置 / 清空”
 - 写入前变更计划与逐字段差异
@@ -52,9 +52,16 @@ Core 只引用纯 .NET 与 ATL.NET，不引用 Avalonia，因此 UI 和写入逻
 ## 基本调用顺序
 
 ```csharp
-var files = new FlacFileDiscovery().Discover(albumFolder);
+var store = new AtlFlacMetadataStore();
+var files = new FlacFileDiscovery().Discover(albumFolder)
+    .Select(file => file with { ExistingTrackNumber = store.Read(file.FilePath).TrackNumber })
+    .ToArray();
 var parsed = new TracklistParser().Parse(pastedTracklist);
 var matched = new TrackMatcher().Match(files, parsed.Tracks);
+if (parsed.HasErrors || !matched.CanWrite)
+{
+    throw new InvalidOperationException("先解决曲目解析或文件匹配错误。");
+}
 
 var draft = new AlbumEditDraft(
     albumTitle,
@@ -67,7 +74,6 @@ var draft = new AlbumEditDraft(
     AlbumArtist: TextFieldEdit.Keep,
     FrontCover: CoverImage.FromFile(coverPath));
 
-var store = new AtlFlacMetadataStore();
 var plan = new AlbumWritePlanBuilder(store).Build(draft);
 
 // UI 应先展示 plan.Tracks[*].Changes 和 plan.Diagnostics。

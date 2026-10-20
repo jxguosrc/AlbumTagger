@@ -75,6 +75,34 @@ public sealed class MainWindowViewModelTests
         Assert.Contains("没有形成完整的一一对应关系", viewModel.StatusText, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ParseAndPreparePlan_UsesExistingTrackNumbersInsteadOfFilenameOrder()
+    {
+        using var directory = TestDirectory.Create();
+        var longPath = directory.CopyFixture("A Long.flac");
+        var shortPath = directory.CopyFixture("Z Short.flac");
+        var store = new AtlFlacMetadataStore();
+        store.Apply(longPath, new DesiredTrackMetadata(
+            "Long", "Test Album", 2, 2, TextFieldEdit.Keep, TextFieldEdit.Keep, null));
+        store.Apply(shortPath, new DesiredTrackMetadata(
+            "Short", "Test Album", 1, 2, TextFieldEdit.Keep, TextFieldEdit.Keep, null));
+
+        var viewModel = new MainWindowViewModel(new NullFilePicker())
+        {
+            AlbumTitle = "Test Album",
+            TracklistText = "01. Short\n02. Long",
+        };
+
+        viewModel.LoadFolder(directory.Path);
+        viewModel.ParseAndMatch();
+        await viewModel.PreparePlanAsync();
+
+        Assert.Equal(["Z Short.flac", "A Long.flac"], viewModel.Tracks.Select(row => row.FileName));
+        Assert.Equal(["Short", "Long"], viewModel.Tracks.Select(row => row.ExistingTitle));
+        Assert.True(viewModel.CanWrite);
+        Assert.Contains("0 个文件将被修改", viewModel.StatusText, StringComparison.Ordinal);
+    }
+
     private sealed class NullFilePicker : IFilePickerService
     {
         public Task<string?> PickFolderAsync() => Task.FromResult<string?>(null);

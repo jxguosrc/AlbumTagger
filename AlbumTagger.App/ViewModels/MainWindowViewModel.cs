@@ -177,24 +177,36 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             var files = discovery.Discover(AlbumFolder);
             var parsed = parser.Parse(TracklistText);
-            var matched = matcher.Match(files, parsed.Tracks);
-            matchIsValid = matched.CanWrite && !parsed.HasErrors;
+            var snapshots = new Dictionary<string, AudioFileSnapshot>(StringComparer.OrdinalIgnoreCase);
+            var filesWithNumbers = new List<AudioFileReference>(files.Count);
+            foreach (var file in files)
+            {
+                try
+                {
+                    var snapshot = metadataStore.Read(file.FilePath);
+                    snapshots.Add(file.FilePath, snapshot);
+                    filesWithNumbers.Add(file with { ExistingTrackNumber = snapshot.TrackNumber });
+                }
+                catch (Exception exception) when (exception is IOException
+                                                   or UnauthorizedAccessException
+                                                   or InvalidDataException
+                                                   or ArgumentException)
+                {
+                    Diagnostics.Add($"读取 {file.FileName} 失败：{exception.Message}");
+                    filesWithNumbers.Add(file);
+                }
+            }
+
+            var matched = matcher.Match(filesWithNumbers, parsed.Tracks);
+            matchIsValid = matched.CanWrite && !parsed.HasErrors && snapshots.Count == files.Count;
             AddDiagnostics(parsed.Diagnostics);
             AddDiagnostics(matched.Diagnostics);
 
             foreach (var item in matched.Matches)
             {
-                var existingTitle = string.Empty;
-                try
-                {
-                    existingTitle = metadataStore.Read(item.File.FilePath).Title;
-                }
-                catch (Exception exception) when (exception is IOException
-                                                   or UnauthorizedAccessException
-                                                   or InvalidDataException)
-                {
-                    Diagnostics.Add($"读取 {item.File.FileName} 失败：{exception.Message}");
-                }
+                var existingTitle = snapshots.TryGetValue(item.File.FilePath, out var snapshot)
+                    ? snapshot.Title
+                    : string.Empty;
 
                 var row = new TrackRowViewModel(
                     item.File.FilePath,

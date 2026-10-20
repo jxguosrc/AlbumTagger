@@ -1,6 +1,10 @@
 namespace AlbumTagger.Core.Files;
 
-public sealed record AudioFileReference(string FilePath, string FileName, long LengthBytes);
+public sealed record AudioFileReference(
+    string FilePath,
+    string FileName,
+    long LengthBytes,
+    int? ExistingTrackNumber = null);
 
 public sealed class FlacFileDiscovery
 {
